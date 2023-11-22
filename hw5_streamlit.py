@@ -28,21 +28,21 @@ def calculate_group_accuracies(filtered_data, category):
         group_accuracies.append({f'{category}={value}': accuracy})
     return group_accuracies
 
-# Display the total accuracy and group accuracies to the user
+#displaying the total accuracy and group accuracies
 def display_results(total_accuracy, group_accuracies):
     st.write(f"Total Accuracy: {total_accuracy}")
     for group_accuracy in group_accuracies:
         st.write(group_accuracy)
 
-# Entry point of the application
+#starting point of the application
 def main():
     file_path = 'predictions.csv'
     predictions_df = load_data(file_path)
+    #creating the drop-down menu for asked categories in the problem
     selected_category = st.selectbox("Select Category", ['Sex', 'Pclass'])
     total_accuracy, filtered_data = calculate_accuracy(predictions_df, selected_category)
     group_accuracies = calculate_group_accuracies(filtered_data, selected_category)
     display_results(total_accuracy, group_accuracies)
-
-# Ensure that the main function is only executed if the script is run directly and not imported as a module
+    
 if __name__ == "__main__":
     main()
