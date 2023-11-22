@@ -2,28 +2,47 @@ import streamlit as st
 import pandas as pd
 from sklearn.metrics import accuracy_score
 
-# Load pre-made predictions from the CSV file
-predictions_df = pd.read_csv('/Users/nigampatel/MLSys-NYU-2023/weeks/11/predictions.csv')
-predictions_df['Predictions'] = predictions_df['Predictions'].apply(lambda x: int(x[1]))  # Convert to integers
+#loading data from the predicted CSV file and converting  Predictions column to integers
+def load_data(file_path):
+    df = pd.read_csv(file_path)
+    df['Predictions'] = df['Predictions'].apply(lambda x: int(x[1]))
+    return df
 
-# Dropdown menu for selecting category
-selected_category = st.selectbox("Select Category", ['Sex', 'Pclass'])
+#calculating the accuracy score of predictions made by the model
+def calculate_accuracy(df, category):
+    #getting unique values of the selected category from the filtered data
+    filtered_data = df[['GroundTruth', 'Predictions', category]]
+    total_accuracy = accuracy_score(filtered_data['GroundTruth'], filtered_data['Predictions'])
+    return total_accuracy, filtered_data
 
-# Filter data based on the selected category
-filtered_data = predictions_df[['GroundTruth', 'Predictions', selected_category]]
+#calculating the accuracy score for each group in the selected category
+def calculate_group_accuracies(filtered_data, category):
+    group_accuracies = []
+    
+    #iterating over each unique value
+    for value in filtered_data[category].unique():
+        #creating a subset of the data where the selected category is equal to current unique value
+        subset = filtered_data[filtered_data[category] == value]
+        #calculating prediction accuracy in the subset
+        accuracy = accuracy_score(subset['GroundTruth'], subset['Predictions'])
+        group_accuracies.append({f'{category}={value}': accuracy})
+    return group_accuracies
 
-# Calculate accuracy for total and each group
-total_accuracy = accuracy_score(filtered_data['GroundTruth'], filtered_data['Predictions'])
-group_accuracies = []
+# Display the total accuracy and group accuracies to the user
+def display_results(total_accuracy, group_accuracies):
+    st.write(f"Total Accuracy: {total_accuracy}")
+    for group_accuracy in group_accuracies:
+        st.write(group_accuracy)
 
-unique_values = filtered_data[selected_category].unique()
-for value in unique_values:
-    subset = filtered_data[filtered_data[selected_category] == value]
-    accuracy = accuracy_score(subset['GroundTruth'], subset['Predictions'])
-    group_accuracies.append({f'{selected_category}={value}': accuracy})
+# Entry point of the application
+def main():
+    file_path = 'predictions.csv'
+    predictions_df = load_data(file_path)
+    selected_category = st.selectbox("Select Category", ['Sex', 'Pclass'])
+    total_accuracy, filtered_data = calculate_accuracy(predictions_df, selected_category)
+    group_accuracies = calculate_group_accuracies(filtered_data, selected_category)
+    display_results(total_accuracy, group_accuracies)
 
-# Display results
-st.write(f"Total Accuracy: {total_accuracy}")
-for group_accuracy in group_accuracies:
-    st.write(group_accuracy)
-
+# Ensure that the main function is only executed if the script is run directly and not imported as a module
+if __name__ == "__main__":
+    main()
